@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdfa 100%);
+      color: #0f766e;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 800;
+    }
+
+    .header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #dateDisplay {
+      font-size: 16px;
+      opacity: 0.95;
+      font-weight: 500;
+    }
+
+    #clock {
+      font-size: 48px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 20px 30px;
+      border-radius: 10px;
+      min-width: 200px;
+      text-align: center;
+      font-family: 'Monaco', monospace;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: white;
+      border: 2px solid #7ee8df;
+      border-radius: 10px;
+      padding: 12px 24px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #0f766e;
+      transition: all 0.3s;
+    }
+
+    .tab-btn:hover {
+      background: #e0f2fe;
+      border-color: #14b8a6;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #14b8a6, #06b6d4);
+      color: white;
+      border-color: #14b8a6;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .section {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 40px rgba(20, 184, 166, 0.1);
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0d5e55;
+      margin-bottom: 20px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    input, textarea {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #7ee8df;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #14b8a6;
+      background: #e0f2fe;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    button {
+      background: linear-gradient(135deg, #14b8a6, #06b6d4);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(20, 184, 166, 0.4);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .card {
+      background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%);
+      border: 2px solid #7ee8df;
+      border-radius: 12px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: #14b8a6;
+      box-shadow: 0 20px 50px rgba(20, 184, 166, 0.2);
+    }
+
+    .list-item {
+      background: #f0f9ff;
+      border-left: 4px solid #14b8a6;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .list-item:hover {
+      background: #e0f2fe;
+    }
+
+    .list-item.completed {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #0f766e;
+      font-size: 16px;
+    }
+
+    canvas {
+      border: 2px solid #7ee8df;
+      border-radius: 8px;
+      background: white;
+      display: block;
+      width: 100%;
+      max-width: 600px;
+      margin: 15px 0;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      #clock {
+        width: 100%;
+        min-width: auto;
+      }
+
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%);
+      border: 2px solid #7ee8df;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: #14b8a6;
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #0f766e;
+      font-weight: 600;
+    }
+
+    .month-box {
+      background: #f0f9ff;
+      border-left: 4px solid #14b8a6;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .month-title {
+      font-weight: 700;
+      color: #0d5e55;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 24px;
+      background: #a5f3fc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #14b8a6, #06b6d4);
+      transition: width 0.6s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    select {
+      padding: 10px 15px;
+      border: 2px solid #7ee8df;
+      border-radius: 8px;
+      background: white;
+      color: #0f766e;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #14b8a6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-info">
+        <h1>📱 Life Dashboard</h1>
+        <div id="dateDisplay">Loading date...</div>
+      </div>
+      <div id="clock">00:00</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('journal', this)">📔 Journal</button>
+      <button class="tab-btn" onclick="switchTab('challenges', this)">🔥 Challenges</button>
+      <button class="tab-btn" onclick="switchTab('habits', this)">📅 Habits</button>
+      <button class="tab-btn" onclick="switchTab('todo', this)">✓ To-Do</button>
+      <button class="tab-btn" onclick="switchTab('progress', this)">📊 Progress</button>
+    </div>
+
+    <!-- Journal Tab -->
+    <div class="tab-content active" id="journal">
+      <div class="section">
+        <div class="section-title">✍️ Journal Entry</div>
+        <input type="text" id="journalTitle" placeholder="Title..." />
+        <textarea id="journalContent" placeholder="Write your thoughts..."></textarea>
+        <button onclick="saveJournal()">💾 Save</button>
+      </div>
+      <div class="section">
+        <div class="section-title">📚 Previous Entries</div>
+        <div id="journalList"></div>
+      </div>
+    </div>
+
+    <!-- Challenges Tab -->
+    <div class="tab-content" id="challenges">
+      <div class="section">
+        <div class="section-title">🔥 21-Day Challenges</div>
+        <input type="text" id="challengeName" placeholder="Challenge name..." />
+        <button onclick="addChallenge()">➕ Add</button>
+        <div class="grid" id="challengesList"></div>
+      </div>
+    </div>
+
+    <!-- Habits Tab -->
+    <div class="tab-content" id="habits">
+      <div class="section">
+        <div class="section-title">📅 Daily Habits</div>
+        <input type="text" id="habitName" placeholder="Habit name..." />
+        <button onclick="addHabit()">➕ Add</button>
+        <div id="habitsList"></div>
+      </div>
+    </div>
+
+    <!-- To-Do Tab -->
+    <div class="tab-content" id="todo">
+      <div class="section">
+        <div class="section-title">✓ To-Do List</div>
+        <input type="text" id="todoName" placeholder="Task name..." />
+        <button onclick="addTodo()">➕ Add</button>
+        <div id="todoList"></div>
+      </div>
+    </div>
+
+    <!-- Progress & Yearly Review Tab -->
+    <div class="tab-content" id="progress">
+      <div class="section">
+        <div class="section-title">📊 Yearly Progress Review</div>
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <label style="margin-right: 15px;">
+            <strong>Select Year:</strong>
+            <select id="yearSelect" onchange="renderYearlyReview()">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+          </label>
+          <button onclick="addDemoData()" style="background: #a5f3fc; color: #0d9488; border: 2px solid #7ee8df; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: 600;">📊 Load Sample Data</button>
+        </div>
+        <div id="yearlyStats"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📅 Monthly Breakdown</div>
+        <div id="monthlyBreakdown"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🎯 Challenge Progress by Month</div>
+        <div id="challengeMonthlyProgress"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Data storage
+    let data = {
+      journal: [],
+      challenges: [],
+      habits: [],
+      todo: []
+    };
+
+    // Load data on startup
+    function loadData() {
+      try {
+        const stored = localStorage.getItem('lifeApp');
+        if (stored) {
+          data = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.warn('Error loading data:', e);
+      }
+      
+      // Update clock IMMEDIATELY
+      updateClock();
+      
+      // Update every second
+      setInterval(updateClock, 1000);
+      
+      // Set current year in dropdown
+      try {
+        const currentYear = new Date().getFullYear();
+        const yearEl = document.getElementById('yearSelect');
+        if (yearEl) {
+          yearEl.value = currentYear;
+        }
+      } catch (e) {
+        console.warn('Year dropdown error:', e);
+      }
+      
+      // Render all content
+      renderAll();
+    }
+
+    // Save data
+    function saveAllData() {
+      localStorage.setItem('lifeApp', JSON.stringify(data));
+    }
+
+    // Update clock
+    function updateClock() {
+      try {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        const clockEl = document.getElementById('clock');
+        if (clockEl) {
+          clockEl.textContent = hours + ':' + minutes;
+        }
+
+        const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+        const dateStr = now.toLocaleDateString('en-US', options);
+        const dateEl = document.getElementById('dateDisplay');
+        if (dateEl) {
+          dateEl.textContent = dateStr;
+        }
+      } catch (e) {
+        console.warn('Clock update error:', e);
+      }
+    }
+
+    // Get today's date key
+    function getTodayKey() {
+      const today = new Date();
+      return today.toISOString().split('T')[0];
+    }
+
+    // Tab switching
+    function switchTab(tabName, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    // ===== JOURNAL =====
+    function saveJournal() {
+      const title = document.getElementById('journalTitle').value.trim();
+      const content = document.getElementById('journalContent').value.trim();
+      if (!content) {
+        alert('Please write something!');
+        return;
+      }
+      data.journal.unshift({
+        id: Date.now(),
+        date: getTodayKey(),
+        title: title || 'Entry',
+        content: content
+      });
+      saveAllData();
+      document.getElementById('journalTitle').value = '';
+      document.getElementById('journalContent').value = '';
+      renderJournal();
+    }
+
+    function renderJournal() {
+      const list = document.getElementById('journalList');
+      if (data.journal.length === 0) {
+        list.innerHTML = '<div class="empty-state">No entries yet</div>';
+        return;
+      }
+      list.innerHTML = data.journal.map(e => `
+        <div class="list-item">
+          <div>
+            <strong>${e.title}</strong><br>
+            <small>${new Date(e.date).toLocaleDateString()}</small><br>
+            ${e.content.substring(0, 50)}...
+          </div>
+          <button onclick="deleteJournal(${e.id})" style="padding: 5px 10px;">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function deleteJournal(id) {
+      data.journal = data.journal.filter(e => e.id !== id);
+      saveAllData();
+      renderJournal();
+    }
+
+    // ===== CHALLENGES =====
+    function addChallenge() {
+      const name = document.getElementById('challengeName').value.trim();
+      if (!name) return;
+      data.challenges.push({
+        id: Date.now(),
+        name: name,
+        completedDays: {}
+      });
+      saveAllData();
+      document.getElementById('challengeName').value = '';
+      renderChallenges();
+    }
+
+    function toggleChallenge(id) {
+      const ch = data.challenges.find(c => c.id === id);
+      if (ch) {
+        const today = getTodayKey();
+        ch.completedDays[today] = !ch.completedDays[today];
+        saveAllData();
+        renderChallenges();
+        renderYearlyReview(); // Update progress tab too
+      }
+    }
+
+    function renderChallenges() {
+      const list = document.getElementById('challengesList');
+      if (data.challenges.length === 0) {
+        list.innerHTML = '<div class="empty-state">No challenges yet</div>';
+        return;
+      }
+      list.innerHTML = data.challenges.map(c => {
+        const days = Object.values(c.completedDays).filter(Boolean).length;
+        const today = getTodayKey();
+        const isDone = c.completedDays[today];
+        return `
+          <div class="card" style="background: ${isDone ? '#ccfbf1' : '#e0f2fe'}" onclick="toggleChallenge(${c.id})">
+            <div style="font-weight: 700;">${c.name}</div>
+            <div style="font-size: 12px; margin-top: 8px;">Day ${days}/21</div>
+            <div style="width: 100%; height: 8px; background: #a5f3fc; border-radius: 10px; margin-top: 8px;">
+              <div style="width: ${(days/21)*100}%; height: 100%; background: #14b8a6; border-radius: 10px;"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ===== HABITS =====
+    function addHabit() {
+      const name = document.getElementById('habitName').value.trim();
+      if (!name) return;
+      data.habits.push({
+        id: Date.now(),
+        name: name,
+        completedDays: {}
+      });
+      saveAllData();
+      document.getElementById('habitName').value = '';
+      renderHabits();
+    }
+
+    function toggleHabit(id) {
+      const h = data.habits.find(x => x.id === id);
+      if (h) {
+        const today = getTodayKey();
+        h.completedDays[today] = !h.completedDays[today];
+        saveAllData();
+        renderHabits();
+        renderYearlyReview(); // Update progress tab too
+      }
+    }
+
+    function getStreak(habit) {
+      const dates = Object.keys(habit.completedDays).filter(d => habit.completedDays[d]).sort().reverse();
+      let count = 0;
+      const today = new Date();
+      for (const d of dates) {
+        const diff = Math.floor((today - new Date(d)) / (1000*60*60*24));
+        if (diff === count) count++;
+        else break;
+      }
+      return count;
+    }
+
+    function renderHabits() {
+      const list = document.getElementById('habitsList');
+      if (data.habits.length === 0) {
+        list.innerHTML = '<div class="empty-state">No habits yet</div>';
+        return;
+      }
+      const today = getTodayKey();
+      list.innerHTML = data.habits.map(h => {
+        const done = h.completedDays[today];
+        const streak = getStreak(h);
+        return `
+          <div class="list-item ${done ? 'completed' : ''}" onclick="toggleHabit(${h.id})">
+            <div>
+              <strong>${h.name}</strong><br>
+              <small>Streak: ${streak} days</small>
+            </div>
+            <div style="font-size: 20px;">${done ? '✅' : '⭕'}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ===== TO-DO =====
+    function addTodo() {
+      const name = document.getElementById('todoName').value.trim();
+      if (!name) return;
+      data.todo.push({
+        id: Date.now(),
+        name: name,
+        done: false
+      });
+      saveAllData();
+      document.getElementById('todoName').value = '';
+      renderTodo();
+    }
+
+    function toggleTodo(id) {
+      const t = data.todo.find(x => x.id === id);
+      if (t) {
+        t.done = !t.done;
+        saveAllData();
+        renderTodo();
+      }
+    }
+
+    function renderTodo() {
+      const list = document.getElementById('todoList');
+      if (data.todo.length === 0) {
+        list.innerHTML = '<div class="empty-state">No tasks yet</div>';
+        return;
+      }
+      list.innerHTML = data.todo.map(t => `
+        <div class="list-item ${t.done ? 'completed' : ''}" onclick="toggleTodo(${t.id})">
+          <div>${t.name}</div>
+          <div style="font-size: 20px;">${t.done ? '✅' : '⭕'}</div>
+        </div>
+      `).join('');
+    }
+
+    // Render all
+    function renderAll() {
+      renderJournal();
+      renderChallenges();
+      renderHabits();
+      renderTodo();
+      renderYearlyReview();
+    }
+
+    // ===== YEARLY & MONTHLY PROGRESS =====
+    function getMonthYear(dateStr) {
+      const date = new Date(dateStr);
+      return {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        monthName: date.toLocaleDateString('en-US', { month: 'long' })
+      };
+    }
+
+    function getMonthDaysCompleted(challenge, year, month) {
+      const days = Object.keys(challenge.completedDays).filter(dateStr => {
+        if (!challenge.completedDays[dateStr]) return false;
+        const my = getMonthYear(dateStr);
+        return my.year === year && my.month === month;
+      });
+      return days.length;
+    }
+
+    function getYearDaysCompleted(challenge, year) {
+      const days = Object.keys(challenge.completedDays).filter(dateStr => {
+        if (!challenge.completedDays[dateStr]) return false;
+        const my = getMonthYear(dateStr);
+        return my.year === year;
+      });
+      return days.length;
+    }
+
+    function renderYearlyReview() {
+      const year = parseInt(document.getElementById('yearSelect').value || new Date().getFullYear());
+      
+      // Yearly stats
+      const statsHtml = renderYearlyStats(year);
+      document.getElementById('yearlyStats').innerHTML = statsHtml;
+      
+      // Monthly breakdown
+      const monthlyHtml = renderMonthlyBreakdown(year);
+      document.getElementById('monthlyBreakdown').innerHTML = monthlyHtml;
+      
+      // Challenge progress
+      const challengeHtml = renderChallengeMonthlyProgress(year);
+      document.getElementById('challengeMonthlyProgress').innerHTML = challengeHtml;
+    }
+
+    function renderYearlyStats(year) {
+      let totalDays = 0;
+      let totalPossible = 0;
+
+      data.challenges.forEach(ch => {
+        const days = getYearDaysCompleted(ch, year);
+        totalDays += days;
+        totalPossible += 365; // Max days per year
+      });
+
+      const completion = totalPossible > 0 ? Math.round((totalDays / totalPossible) * 100) : 0;
+      const activeCount = data.challenges.length;
+
+      return `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div class="stat-box">
+            <div class="stat-label">🎯 Active Challenges</div>
+            <div class="stat-value">${activeCount}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">✅ Total Days Completed</div>
+            <div class="stat-value">${totalDays}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">📈 Yearly Completion</div>
+            <div class="stat-value">${completion}%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">🏆 Year</div>
+            <div class="stat-value">${year}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMonthlyBreakdown(year) {
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      let html = '';
+      const today = new Date();
+
+      for (let month = 1; month <= 12; month++) {
+        // Don't show future months
+        if (year === today.getFullYear() && month > today.getMonth() + 1) continue;
+
+        let totalDays = 0;
+        let totalPossible = 0;
+
+        data.challenges.forEach(ch => {
+          const days = getMonthDaysCompleted(ch, year, month);
+          totalDays += days;
+          totalPossible += 21; // 21 days per challenge per month
+        });
+
+        const completion = totalPossible > 0 ? Math.round((totalDays / totalPossible) * 100) : 0;
+
+        html += `
+          <div class="month-box">
+            <div class="month-title">📅 ${months[month - 1]} ${year}</div>
+            <div class="stat-label">Completed: ${totalDays}/${totalPossible} days</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" style="width: ${completion}%">
+                ${completion > 5 ? completion + '%' : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return html || '<div class="empty-state">No data for this year yet</div>';
+    }
+
+    function renderChallengeMonthlyProgress(year) {
+      if (data.challenges.length === 0) {
+        return '<div class="empty-state">No challenges to track</div>';
+      }
+
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const today = new Date();
+
+      let html = '';
+
+      data.challenges.forEach(ch => {
+        html += `<div class="month-box">
+          <div class="month-title">🎯 ${ch.name}</div>`;
+
+        for (let month = 1; month <= 12; month++) {
+          if (year === today.getFullYear() && month > today.getMonth() + 1) break;
+
+          const days = getMonthDaysCompleted(ch, year, month);
+          const monthStr = months[month - 1];
+
+          html += `
+            <div style="display: inline-block; margin: 5px; text-align: center;">
+              <div style="font-size: 24px;">${days > 0 ? '✅' : '⭕'}</div>
+              <div style="font-size: 11px; color: #0f766e;">${monthStr}</div>
+              <div style="font-size: 12px; font-weight: 600; color: #14b8a6;">${days}/21</div>
+            </div>
+          `;
+        }
+
+        html += `</div>`;
+      });
+
+      return html;
+    }
+
+    // ===== DEMO DATA =====
+    function addDemoData() {
+      if (confirm('Add sample data to see how monthly progress works?\n\nThis will add test data for the past 2 months.')) {
+        // Add sample challenges if none exist
+        if (data.challenges.length === 0) {
+          data.challenges.push({
+            id: Date.now(),
+            name: 'Meditation',
+            completedDays: {}
+          });
+          data.challenges.push({
+            id: Date.now() + 1,
+            name: 'Exercise',
+            completedDays: {}
+          });
+        }
+
+        // Add sample completed days
+        const today = new Date();
+        for (let i = 0; i < 30; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const dateKey = d.toISOString().split('T')[0];
+          
+          if (data.challenges[0]) {
+            data.challenges[0].completedDays[dateKey] = Math.random() > 0.3;
+          }
+          if (data.challenges[1]) {
+            data.challenges[1].completedDays[dateKey] = Math.random() > 0.4;
+          }
+        }
+
+        saveAllData();
+        renderAll();
+        alert('✅ Demo data added! Check Progress tab to see monthly breakdown.');
+      }
+    }
+
+    // Start app on page load
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', loadData);
+    } else {
+      // DOM already loaded
+      loadData();
+    }
+    
+    // Also try immediate initialization as fallback
+    setTimeout(function() {
+      updateClock();
+    }, 100);
+  </script>
+</body>
+</html>
