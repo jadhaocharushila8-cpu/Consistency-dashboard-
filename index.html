@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Consistency Dashboard - Track challenges, habits, reminders with voice notifications">
+  <meta name="theme-color" content="#14b8a6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Consistency">
+  
+  <title>Consistency Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdfa 100%);
+      color: #0f766e;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    #dateDisplay {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    #clock {
+      font-size: 24px;
+      font-weight: 700;
+      min-width: 70px;
+      text-align: right;
+    }
+
+    .tab-buttons {
+      display: flex;
+      gap: 5px;
+      padding: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      flex-shrink: 0;
+      background: white;
+      border-bottom: 1px solid #d1fae5;
+    }
+
+    .tab-buttons button {
+      background: white;
+      border: 2px solid #d1fae5;
+      color: #0d5e55;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .tab-buttons button.active {
+      background: linear-gradient(135deg, #14b8a6, #06b6d4);
+      color: white;
+      border-color: #14b8a6;
+    }
+
+    .content-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 15px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    input[type="text"], input[type="datetime-local"], textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #d1fae5;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 200px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #14b8a6, #06b6d4);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .btn-danger {
+      background: #ef4444;
+    }
+
+    .btn-small {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid #14b8a6;
+    }
+
+    .challenge-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid #14b8a6;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .challenge-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+
+    .challenge-card.completed {
+      background: #d1fae5;
+      border-left-color: #10b981;
+    }
+
+    #drawingCanvas {
+      border: 2px dashed #d1fae5;
+      border-radius: 8px;
+      display: block;
+      margin: 10px 0;
+      touch-action: none;
+      cursor: crosshair;
+      width: 100%;
+      height: 300px;
+    }
+
+    .canvas-tools {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .list-item {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .list-item-text {
+      flex: 1;
+      text-align: left;
+    }
+
+    .list-item.done .list-item-text {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .list-item-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .reminder-item {
+      background: white;
+      border-left: 4px solid #f97316;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .reminder-time {
+      font-weight: 600;
+      color: #f97316;
+      font-size: 14px;
+    }
+
+    .reminder-text {
+      margin-top: 5px;
+      color: #0f766e;
+    }
+
+    .progress-bar {
+      background: #d1fae5;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, #14b8a6, #06b6d4);
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6b7280;
+    }
+
+    @media (min-width: 1024px) {
+      .header {
+        padding: 25px 40px;
+      }
+
+      .header h1 {
+        font-size: 28px;
+      }
+
+      #clock {
+        font-size: 32px;
+      }
+
+      .content-wrapper {
+        padding: 30px;
+      }
+
+      textarea {
+        min-height: 400px;
+        font-size: 16px;
+      }
+
+      #drawingCanvas {
+        height: 500px;
+      }
+
+      .tab-buttons button {
+        padding: 12px 20px;
+        font-size: 16px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 0;
+      }
+
+      .header {
+        padding: 12px 15px;
+      }
+
+      .header h1 {
+        font-size: 18px;
+      }
+
+      #dateDisplay {
+        font-size: 11px;
+      }
+
+      #clock {
+        font-size: 20px;
+        min-width: 60px;
+      }
+
+      .content-wrapper {
+        padding: 12px;
+      }
+
+      textarea {
+        min-height: 150px;
+      }
+
+      #drawingCanvas {
+        height: 250px;
+      }
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #0d5e55;
+    }
+
+    h3 {
+      margin-top: 20px;
+      margin-bottom: 15px;
+      color: #0d5e55;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-info">
+        <h1>✓ Consistency</h1>
+        <div id="dateDisplay">Loading date...</div>
+      </div>
+      <div id="clock">00:00</div>
+    </div>
+
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchTab('journal', this)">📔 Journal</button>
+      <button class="tab-btn" onclick="switchTab('challenges', this)">🔥 Challenges</button>
+      <button class="tab-btn" onclick="switchTab('habits', this)">📅 Habits</button>
+      <button class="tab-btn" onclick="switchTab('todo', this)">✓ To-Do</button>
+      <button class="tab-btn" onclick="switchTab('reminders', this)">🔔 Reminders</button>
+      <button class="tab-btn" onclick="switchTab('progress', this)">📊 Progress</button>
+    </div>
+
+    <div class="content-wrapper">
+
+      <!-- JOURNAL TAB -->
+      <div id="journalTab" class="tab-content active">
+        <h2>📔 Journal</h2>
+        <input type="text" id="journalTitle" placeholder="Journal title (optional)">
+        <textarea id="journalContent" placeholder="Write your thoughts, feelings, memories..."></textarea>
+        
+        <h3>✏️ Draw or Write by Hand</h3>
+        <div class="canvas-tools">
+          <button onclick="clearCanvas()" class="btn-small">Clear Drawing</button>
+          <button onclick="downloadDrawing()" class="btn-small">📥 Save Drawing</button>
+          <input type="color" id="drawColor" value="#14b8a6" title="Drawing color">
+          <input type="range" id="brushSize" min="1" max="20" value="3" title="Brush size" style="flex: 0 0 100px;">
+        </div>
+        <canvas id="drawingCanvas"></canvas>
+
+        <button onclick="addJournalEntry()" style="margin-top: 15px;">💾 Save Entry</button>
+        
+        <div id="journalList" style="margin-top: 30px;"></div>
+      </div>
+
+      <!-- CHALLENGES TAB -->
+      <div id="challengesTab" class="tab-content">
+        <h2>🔥 Challenges</h2>
+        <input type="text" id="challengeInput" placeholder="Enter challenge name">
+        <button onclick="addChallenge()">➕ Add Challenge</button>
+        <div id="challengesContainer"></div>
+      </div>
+
+      <!-- HABITS TAB -->
+      <div id="habitsTab" class="tab-content">
+        <h2>📅 Daily Habits</h2>
+        <input type="text" id="habitInput" placeholder="Enter habit name">
+        <button onclick="addHabit()">➕ Add Habit</button>
+        <div id="habitsList"></div>
+      </div>
+
+      <!-- TO-DO TAB -->
+      <div id="todoTab" class="tab-content">
+        <h2>✓ To-Do List</h2>
+        <input type="text" id="todoInput" placeholder="Enter task">
+        <button onclick="addTodo()">➕ Add Task</button>
+        <div id="todoList"></div>
+      </div>
+
+      <!-- REMINDERS TAB -->
+      <div id="remindersTab" class="tab-content">
+        <h2>🔔 Reminders & Appointments</h2>
+
+        <input type="text" id="reminderTitle" placeholder="Reminder title">
+        <input type="datetime-local" id="reminderTime">
+        <textarea id="reminderNotes" placeholder="Details..." style="min-height: 100px;"></textarea>
+        
+        <div style="margin-bottom: 15px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="voiceAlert" checked>
+            <span>🔊 Enable Voice Notification</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 8px;">
+            <input type="checkbox" id="soundAlert" checked>
+            <span>🔔 Enable Alarm Sound</span>
+          </label>
+        </div>
+
+        <button onclick="addReminder()">➕ Add Reminder</button>
+
+        <h3>📋 Upcoming Reminders</h3>
+        <div id="remindersList"></div>
+      </div>
+
+      <!-- PROGRESS TAB -->
+      <div id="progressTab" class="tab-content">
+        <h2>📊 Progress</h2>
+        <div style="margin-bottom: 20px;">
+          <label>Select Year: </label>
+          <select id="yearSelect" onchange="renderYearlyReview()" style="padding: 8px; border: 2px solid #d1fae5; border-radius: 8px;">
+            <option>2024</option>
+            <option>2025</option>
+            <option>2026</option>
+          </select>
+        </div>
+        
+        <div id="progressContainer"></div>
+        <button onclick="addDemoData()" style="margin-top: 20px;">📊 Load Sample Data</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ==================== DATA ====================
+    let data = {
+      journal: [],
+      challenges: [],
+      habits: [],
+      todo: [],
+      reminders: []
+    };
+
+    // ==================== INITIALIZATION ====================
+    window.addEventListener('DOMContentLoaded', function() {
+      loadData();
+      setupCanvas();
+    });
+
+    function loadData() {
+      try {
+        const stored = localStorage.getItem('lifeApp');
+        if (stored) {
+          data = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error('Error loading data:', e);
+      }
+      
+      updateClock();
+      setInterval(updateClock, 1000);
+      
+      try {
+        const currentYear = new Date().getFullYear();
+        const yearEl = document.getElementById('yearSelect');
+        if (yearEl) yearEl.value = currentYear;
+      } catch (e) {}
+      
+      renderAll();
+      checkReminders();
+      setInterval(checkReminders, 30000);
+    }
+
+    function saveAllData() {
+      localStorage.setItem('lifeApp', JSON.stringify(data));
+      console.log('Data saved!');
+    }
+
+    // ==================== CLOCK ====================
+    function updateClock() {
+      try {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        document.getElementById('clock').textContent = hours + ':' + minutes;
+
+        const options = { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' };
+        const dateStr = now.toLocaleDateString('en-US', options);
+        document.getElementById('dateDisplay').textContent = dateStr;
+      } catch (e) {
+        console.error('Clock error:', e);
+      }
+    }
+
+    // ==================== TABS ====================
+    function switchTab(tabName, btn) {
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      document.getElementById(tabName + 'Tab').classList.add('active');
+      
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+      });
+      btn.classList.add('active');
+    }
+
+    function getTodayKey() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // ==================== JOURNAL ====================
+    function addJournalEntry() {
+      const title = document.getElementById('journalTitle').value.trim();
+      const content = document.getElementById('journalContent').value.trim();
+      
+      if (content === '') {
+        alert('Please write something!');
+        return;
+      }
+
+      const canvas = document.getElementById('drawingCanvas');
+      const drawingData = canvas.toDataURL();
+
+      const entry = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        title: title || 'Untitled',
+        content: content,
+        drawing: drawingData
+      };
+      
+      data.journal.push(entry);
+      saveAllData();
+      renderJournal();
+      
+      document.getElementById('journalTitle').value = '';
+      document.getElementById('journalContent').value = '';
+      clearCanvas();
+      
+      alert('✓ Saved!');
+    }
+
+    function renderJournal() {
+      const container = document.getElementById('journalList');
+      container.innerHTML = '';
+      
+      if (data.journal.length === 0) {
+        container.innerHTML = '<div class="empty-state">No entries yet</div>';
+        return;
+      }
+      
+      [...data.journal].reverse().forEach(entry => {
+        const date = new Date(entry.date);
+        const dateStr = date.toLocaleDateString();
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <strong>${entry.title}</strong>
+            <button class="btn-small btn-danger" data-journal-id="${entry.id}">🗑️</button>
+          </div>
+          <small style="color: #999;">${dateStr}</small>
+          <p style="margin-top: 10px;">${entry.content.replace(/\n/g, '<br>')}</p>
+          ${entry.drawing && entry.drawing !== 'data:image/png;base64,' ? '<img src="' + entry.drawing + '" style="max-width: 100%; margin-top: 10px; border-radius: 8px;">' : ''}
+        `;
+        
+        card.querySelector('[data-journal-id]').addEventListener('click', function(e) {
+          e.preventDefault();
+          const journalId = parseInt(this.getAttribute('data-journal-id'));
+          if (confirm('Delete this entry?')) {
+            data.journal = data.journal.filter(j => j.id !== journalId);
+            saveAllData();
+            renderJournal();
+          }
+        });
+        
+        container.appendChild(card);
+      });
+    }
+
+    // ==================== CANVAS ====================
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function setupCanvas() {
+      const canvas = document.getElementById('drawingCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      function resizeCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
+
+      canvas.addEventListener('touchstart', handleTouch);
+      canvas.addEventListener('touchmove', handleTouch);
+      canvas.addEventListener('touchend', stopDrawing);
+    }
+
+    function handleTouch(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      });
+      document.elementFromPoint(touch.clientX, touch.clientY).dispatchEvent(mouseEvent);
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const rect = e.target.getBoundingClientRect();
+      lastX = e.clientX - rect.left;
+      lastY = e.clientY - rect.top;
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      
+      const canvas = document.getElementById('drawingCanvas');
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      ctx.strokeStyle = document.getElementById('drawColor').value;
+      ctx.lineWidth = document.getElementById('brushSize').value;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+
+      lastX = x;
+      lastY = y;
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function clearCanvas() {
+      const canvas = document.getElementById('drawingCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function downloadDrawing() {
+      const canvas = document.getElementById('drawingCanvas');
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL();
+      link.download = 'drawing.png';
+      link.click();
+    }
+
+    // ==================== CHALLENGES ====================
+    function addChallenge() {
+      const name = document.getElementById('challengeInput').value.trim();
+      
+      if (!name) {
+        alert('Please enter a challenge name');
+        return;
+      }
+      
+      data.challenges.push({
+        id: Date.now(),
+        name: name,
+        completedDays: {}
+      });
+      
+      saveAllData();
+      renderChallenges();
+      document.getElementById('challengeInput').value = '';
+    }
+
+    function toggleChallenge(id) {
+      const challenge = data.challenges.find(c => c.id === id);
+      if (!challenge) return;
+      
+      const today = getTodayKey();
+      if (challenge.completedDays[today]) {
+        delete challenge.completedDays[today];
+      } else {
+        challenge.completedDays[today] = true;
+      }
+      
+      saveAllData();
+      renderChallenges();
+    }
+
+    function renderChallenges() {
+      const container = document.getElementById('challengesContainer');
+      container.innerHTML = '';
+      
+      if (data.challenges.length === 0) {
+        container.innerHTML = '<div class="empty-state">No challenges yet</div>';
+        return;
+      }
+      
+      data.challenges.forEach(challenge => {
+        const today = getTodayKey();
+        const completed = challenge.completedDays[today] ? true : false;
+        const days = Object.keys(challenge.completedDays).length;
+        const percent = (days / 21) * 100;
+        
+        const card = document.createElement('div');
+        card.className = 'challenge-card' + (completed ? ' completed' : '');
+        card.innerHTML = `
+          <strong style="display: block; margin-bottom: 10px;">${challenge.name}</strong>
+          <small>Day ${days}/21</small>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${percent}%"></div>
+          </div>
+          <button class="btn-small btn-danger" style="margin-top: 10px; width: 100%;" data-challenge-id="${challenge.id}">🗑️ Delete</button>
+        `;
+        
+        card.addEventListener('click', function(e) {
+          if (e.target.tagName !== 'BUTTON') {
+            toggleChallenge(challenge.id);
+          }
+        });
+        
+        card.querySelector('[data-challenge-id]').addEventListener('click', function(e) {
+          e.stopPropagation();
+          const cid = parseInt(this.getAttribute('data-challenge-id'));
+          if (confirm('Delete this challenge?')) {
+            data.challenges = data.challenges.filter(c => c.id !== cid);
+            saveAllData();
+            renderChallenges();
+          }
+        });
+        
+        container.appendChild(card);
+      });
+    }
+
+    // ==================== HABITS ====================
+    function addHabit() {
+      const name = document.getElementById('habitInput').value.trim();
+      
+      if (!name) {
+        alert('Please enter habit name');
+        return;
+      }
+      
+      data.habits.push({
+        id: Date.now(),
+        name: name,
+        completedDays: {}
+      });
+      
+      saveAllData();
+      renderHabits();
+      document.getElementById('habitInput').value = '';
+    }
+
+    function toggleHabit(id) {
+      const habit = data.habits.find(h => h.id === id);
+      if (!habit) return;
+      
+      const today = getTodayKey();
+      if (habit.completedDays[today]) {
+        delete habit.completedDays[today];
+      } else {
+        habit.completedDays[today] = true;
+      }
+      
+      saveAllData();
+      renderHabits();
+    }
+
+    function renderHabits() {
+      const container = document.getElementById('habitsList');
+      container.innerHTML = '';
+      
+      if (data.habits.length === 0) {
+        container.innerHTML = '<div class="empty-state">No habits yet</div>';
+        return;
+      }
+      
+      data.habits.forEach(habit => {
+        const today = getTodayKey();
+        const completed = habit.completedDays[today] ? true : false;
+        
+        const item = document.createElement('div');
+        item.className = 'list-item' + (completed ? ' done' : '');
+        item.innerHTML = `
+          <div class="list-item-text">
+            <strong>${habit.name}</strong>
+          </div>
+          <div class="list-item-actions">
+            <button class="btn-small" data-habit-toggle="${habit.id}">${completed ? '✓' : '○'}</button>
+            <button class="btn-small btn-danger" data-habit-delete="${habit.id}">🗑️</button>
+          </div>
+        `;
+        
+        item.querySelector('[data-habit-toggle]').addEventListener('click', function() {
+          toggleHabit(parseInt(this.getAttribute('data-habit-toggle')));
+        });
+        
+        item.querySelector('[data-habit-delete]').addEventListener('click', function() {
+          const hid = parseInt(this.getAttribute('data-habit-delete'));
+          if (confirm('Delete this habit?')) {
+            data.habits = data.habits.filter(h => h.id !== hid);
+            saveAllData();
+            renderHabits();
+          }
+        });
+        
+        container.appendChild(item);
+      });
+    }
+
+    // ==================== TO-DO ====================
+    function addTodo() {
+      const name = document.getElementById('todoInput').value.trim();
+      
+      if (!name) {
+        alert('Please enter a task');
+        return;
+      }
+      
+      data.todo.push({
+        id: Date.now(),
+        name: name,
+        done: false
+      });
+      
+      saveAllData();
+      renderTodo();
+      document.getElementById('todoInput').value = '';
+    }
+
+    function renderTodo() {
+      const container = document.getElementById('todoList');
+      container.innerHTML = '';
+      
+      if (data.todo.length === 0) {
+        container.innerHTML = '<div class="empty-state">No tasks yet</div>';
+        return;
+      }
+      
+      data.todo.forEach(todo => {
+        const item = document.createElement('div');
+        item.className = 'list-item' + (todo.done ? ' done' : '');
+        item.innerHTML = `
+          <div class="list-item-text">${todo.name}</div>
+          <div class="list-item-actions">
+            <button class="btn-small" data-todo-toggle="${todo.id}">${todo.done ? '✓' : '○'}</button>
+            <button class="btn-small btn-danger" data-todo-delete="${todo.id}">🗑️</button>
+          </div>
+        `;
+        
+        item.querySelector('[data-todo-toggle]').addEventListener('click', function() {
+          const tid = parseInt(this.getAttribute('data-todo-toggle'));
+          const todo = data.todo.find(t => t.id === tid);
+          if (todo) {
+            todo.done = !todo.done;
+            saveAllData();
+            renderTodo();
+          }
+        });
+        
+        item.querySelector('[data-todo-delete]').addEventListener('click', function() {
+          const tid = parseInt(this.getAttribute('data-todo-delete'));
+          if (confirm('Delete this task?')) {
+            data.todo = data.todo.filter(t => t.id !== tid);
+            saveAllData();
+            renderTodo();
+            console.log('Deleted todo ID:', tid, 'Remaining:', data.todo);
+          }
+        });
+        
+        container.appendChild(item);
+      });
+    }
+
+    // ==================== REMINDERS ====================
+    function addReminder() {
+      console.log('addReminder clicked');
+      
+      const titleEl = document.getElementById('reminderTitle');
+      const timeEl = document.getElementById('reminderTime');
+      const notesEl = document.getElementById('reminderNotes');
+      
+      const title = titleEl ? titleEl.value.trim() : '';
+      const time = timeEl ? timeEl.value : '';
+      const notes = notesEl ? notesEl.value.trim() : '';
+
+      console.log('Title:', title, 'Time:', time, 'Notes:', notes);
+
+      if (!title || !time) {
+        alert('❌ Please enter:\n1. Reminder title\n2. Date and time');
+        return;
+      }
+
+      const reminder = {
+        id: Date.now(),
+        title: title,
+        time: time,
+        notes: notes,
+        voiceAlert: document.getElementById('voiceAlert').checked,
+        soundAlert: document.getElementById('soundAlert').checked,
+        completed: false
+      };
+
+      console.log('Creating reminder:', reminder);
+      
+      data.reminders.push(reminder);
+      console.log('Reminders now:', data.reminders);
+      
+      saveAllData();
+      renderReminders();
+      
+      if (titleEl) titleEl.value = '';
+      if (timeEl) timeEl.value = '';
+      if (notesEl) notesEl.value = '';
+      
+      alert('✅ Reminder added!\n\nTitle: ' + title + '\nTime: ' + new Date(time).toLocaleString());
+    }
+
+    function renderReminders() {
+      const container = document.getElementById('remindersList');
+      container.innerHTML = '';
+      
+      if (data.reminders.length === 0) {
+        container.innerHTML = '<div class="empty-state">No reminders yet</div>';
+        return;
+      }
+      
+      [...data.reminders].sort((a, b) => new Date(a.time) - new Date(b.time)).forEach(reminder => {
+        const reminderDate = new Date(reminder.time);
+        const timeStr = reminderDate.toLocaleString('en-US', { 
+          month: 'short', day: 'numeric', 
+          hour: '2-digit', minute: '2-digit' 
+        });
+
+        const item = document.createElement('div');
+        item.className = 'reminder-item';
+        item.innerHTML = `
+          <div class="reminder-time">🕐 ${timeStr}</div>
+          <div class="reminder-text"><strong>${reminder.title}</strong></div>
+          ${reminder.notes ? '<div style="font-size: 12px; color: #666; margin-top: 5px;">' + reminder.notes + '</div>' : ''}
+          <button class="btn-small btn-danger" style="margin-top: 10px;" data-reminder-delete="${reminder.id}">🗑️ Delete</button>
+        `;
+        
+        item.querySelector('[data-reminder-delete]').addEventListener('click', function() {
+          const rid = parseInt(this.getAttribute('data-reminder-delete'));
+          if (confirm('Delete this reminder?')) {
+            data.reminders = data.reminders.filter(r => r.id !== rid);
+            saveAllData();
+            renderReminders();
+          }
+        });
+        
+        container.appendChild(item);
+      });
+    }
+
+    function checkReminders() {
+      const now = new Date();
+      
+      data.reminders.forEach(reminder => {
+        if (reminder.completed) return;
+        
+        const reminderTime = new Date(reminder.time);
+        const diffMs = reminderTime - now;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffSecs = Math.floor(diffMs / 1000);
+        
+        // Trigger within 1 minute before and up to trigger time
+        if (diffSecs >= -60 && diffSecs <= 60) {
+          console.log('Triggering reminder:', reminder.title, 'Diff:', diffSecs, 'seconds');
+          triggerReminder(reminder);
+          reminder.completed = true;
+          saveAllData();
+          renderReminders(); // Update display
+        }
+      });
+    }
+
+    function triggerReminder(reminder) {
+      console.log('🔔 REMINDER TRIGGERED:', reminder.title);
+      
+      // Play sound multiple times
+      if (reminder.soundAlert) {
+        try {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          
+          // Play beep 3 times
+          for (let i = 0; i < 3; i++) {
+            setTimeout(function() {
+              const oscillator = audioContext.createOscillator();
+              const gainNode = audioContext.createGain();
+              
+              oscillator.connect(gainNode);
+              gainNode.connect(audioContext.destination);
+              
+              oscillator.frequency.value = 800;
+              oscillator.type = 'sine';
+              
+              gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+              gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+              
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.5);
+            }, i * 700);
+          }
+          console.log('✓ Sound playing');
+        } catch (e) {
+          console.error('❌ Sound error:', e);
+        }
+      }
+      
+      // Voice message
+      if (reminder.voiceAlert) {
+        try {
+          // Cancel any previous speech
+          speechSynthesis.cancel();
+          
+          const text = reminder.notes ? 
+            `Reminder: ${reminder.title}. ${reminder.notes}` : 
+            `Reminder: ${reminder.title}`;
+          
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.9;
+          utterance.pitch = 1;
+          utterance.volume = 1;
+          
+          utterance.onstart = function() {
+            console.log('🔊 Voice started');
+          };
+          
+          utterance.onend = function() {
+            console.log('🔊 Voice ended');
+          };
+          
+          utterance.onerror = function(event) {
+            console.error('🔊 Voice error:', event);
+          };
+          
+          speechSynthesis.speak(utterance);
+          console.log('✓ Voice speaking');
+        } catch (e) {
+          console.error('❌ Voice error:', e);
+        }
+      }
+      
+      // Browser notification
+      try {
+        if ('Notification' in window) {
+          if (Notification.permission === 'granted') {
+            new Notification('🔔 Reminder: ' + reminder.title, { 
+              body: reminder.notes || 'Time to do this!',
+              tag: 'reminder-' + reminder.id,
+              requireInteraction: true
+            });
+            console.log('✓ Notification shown');
+          } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission();
+          }
+        }
+      } catch (e) {
+        console.error('❌ Notification error:', e);
+      }
+    }
+
+    // ==================== PROGRESS ====================
+    function renderYearlyReview() {
+      const container = document.getElementById('progressContainer');
+      const year = parseInt(document.getElementById('yearSelect').value);
+      
+      container.innerHTML = '<h3>Yearly Stats for ' + year + '</h3>';
+      
+      let totalDays = 0;
+      let activeChallenges = 0;
+      
+      data.challenges.forEach(challenge => {
+        const daysInYear = Object.keys(challenge.completedDays).filter(date => {
+          return date.startsWith(year.toString());
+        }).length;
+        totalDays += daysInYear;
+        if (daysInYear > 0) activeChallenges++;
+      });
+      
+      const maxDays = data.challenges.length * 365;
+      const percentage = maxDays > 0 ? Math.round((totalDays / maxDays) * 100) : 0;
+      
+      container.innerHTML += `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+          <div class="card" style="text-align: center;"><div style="font-size: 20px; font-weight: 700; color: #14b8a6;">${activeChallenges}</div><small>Challenges</small></div>
+          <div class="card" style="text-align: center;"><div style="font-size: 20px; font-weight: 700; color: #06b6d4;">${totalDays}</div><small>Days Done</small></div>
+          <div class="card" style="text-align: center;"><div style="font-size: 20px; font-weight: 700; color: #10b981;">${percentage}%</div><small>Complete</small></div>
+        </div>
+      `;
+    }
+
+    function addDemoData() {
+      const today = new Date();
+      for (let i = 0; i < 30; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateKey = formatDate(date);
+        
+        if (data.challenges.length > 0 && Math.random() > 0.3) {
+          data.challenges[0].completedDays[dateKey] = true;
+        }
+      }
+      
+      saveAllData();
+      renderYearlyReview();
+      alert('✓ Sample data loaded!');
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // ==================== RENDER ALL ====================
+    function renderAll() {
+      renderJournal();
+      renderChallenges();
+      renderHabits();
+      renderTodo();
+      renderReminders();
+      renderYearlyReview();
+    }
+
+    // Request notification permission on load
+    if ('Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+          console.log('Notification permission:', permission);
+        });
+      }
+    }
+
+    // More frequent checking for home screen app
+    const reminderCheckInterval = setInterval(checkReminders, 10000); // Check every 10 seconds
+    console.log('Reminder check started, checking every 10 seconds');
+
+    // Keep checking even when app is in background
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        console.log('App hidden, checking reminders anyway...');
+        checkReminders();
+      }
+    });
+
+    // For iOS: Keep waking up periodically
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+      setInterval(function() {
+        fetch(window.location.href, {cache: 'no-store'}).catch(() => {});
+      }, 30000);
+    }
+
+    console.log('=== APP LOADED ===');
+    console.log('Reminders data:', data.reminders);
+    console.log('Checking for reminders every 10 seconds');
+  </script>
+</body>
+</html>
